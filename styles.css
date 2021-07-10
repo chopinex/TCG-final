@@ -43,6 +43,18 @@ p{
     line-height: 1.8;
 }
 
+p a{
+    text-decoration: none;
+    color: black;
+    font-weight: bolder;
+}
+
+p a:hover{
+    text-decoration: underline;
+    color: #666;
+    font-weight: bolder;
+}
+
 .content{
         margin:  0 auto;
         width: 60%;
@@ -65,6 +77,7 @@ p{
     font-size: 11pt;
     font-family: 'Source Code Pro', monospace;
     line-height: 1.5;
+    word-wrap: break-word;
 }
 
 .console{
