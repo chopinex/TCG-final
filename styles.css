@@ -1,0 +1,78 @@
+body{
+    margin:  0 auto;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: lighter;
+}
+
+header{
+    margin:  0 auto;
+    padding: 30px 150px;
+    color: white;
+    text-align: center;
+    background-image: linear-gradient(60deg, MidnightBlue, SeaGreen);
+    font-family: 'Kanit', sans-serif;
+}
+
+h1{
+    font-size: 40pt;
+    line-height: 0.9;
+}
+
+h3{
+   letter-spacing: 1px;
+    font-size: 18pt;
+    font-weight: regular;  
+}
+
+h4{
+    letter-spacing: 1px;
+    font-size: 14pt;
+    text-align: justify-all;  
+    color: #666;
+    line-height: 1.3;
+}
+
+img{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 60%;
+}
+
+p{
+    line-height: 1.8;
+}
+
+.content{
+        margin:  0 auto;
+        width: 60%;
+}
+
+.name{
+    font-size: 11pt;
+    color: seagreen;
+}
+
+.contact{
+    font-size: 10pt;
+    color: #999;   
+}
+
+.code{
+    background-color: #eee;
+    padding:  20px;
+    margin: 50px 0;
+    font-size: 11pt;
+    font-family: 'Source Code Pro', monospace;
+    line-height: 1.5;
+}
+
+.console{
+    background-color: #333;
+    padding:  10px 20px;
+    font-size: 11pt;
+    font-family: 'Source Code Pro', monospace;
+    color: #eee;
+    margin-bottom: 50px;
+    font-weight: bold;
+}

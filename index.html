@@ -1,12 +1,59 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,700;1,400&family=Montserrat:ital,wght@0,300;0,500;1,400&family=Source+Code+Pro:wght@200&display=swap" rel="stylesheet">  
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Visualización de la información de tráfico en la ciudad de Arequipa</h1>
-    <h3>En el presente artículo presentamos la información recopilada, metodología de procesamiento y resultados finales del projecto de Visualización de la data de tráfico presentada en Arequipa, con información extraída desde la API Distance Matrix de Google</h3>
-    <div>Arturo Doménico Navarro Riveros - Universidad Católica San Pablo</div>
-    <div>arturo.navarro@ucsp.edu.pe</div>
-    <div>12 de Julio de 2021</div>
+    <header>
+        <h1>Visualización de información de tráfico en la ciudad de Arequipa</h1>
+        <h3>Tópicos de Computación Gráfica - Introducción a la Ciencia de Datos</h3>
+    </header>
+    <div class='content'>
+        <h4>En el presente artículo presentamos la información recopilada, metodología de procesamiento y resultados finales del proyecto de Visualización de la data de tráfico presentada en Arequipa, con información extraída desde la API Distance Matrix de Google</h4>
+        <div class='name'>Arturo Doménico Navarro Riveros - Universidad Católica San Pablo</div>
+        <div class='contact'>arturo.navarro@ucsp.edu.pe<br />
+        12 de Julio de 2021</div>
+        <h2>Recolección de datos</h2>
+        <p>En un notebook utilizamos la librería OSMNX para generar los puntos que formarán parte del grafo de estudio dentro de la ciudad de Arequipa</p>
+        <div class='code'>!pip install osmnx<br/>
+            import osmnx as ox<br/>
+            %matplotlib inline<br/>
+            G = ox.graph_from_address('Arequipa', network_type='drive', simplify=True,dist=7000)<br/>
+            Gg = ox.utils_graph.get_largest_component(G, strongly=True) <br/>
+            ox.plot_graph(Gg)
+        </div>
+        <p>Donde definimos el grafo desde la ubicación del centro de Arequipa, con una red de tráfico vehicular (network_type='drive'), con conexiones simplificadas y 7 kilómetros a la redonda. El grafo generado se visualiza de la siguiente forma:</p>
+        <img src="grafo.png" alt="Grafo Arequipa" />
+        <p>Este grafo cubre prácticamente toda la ciudad desde Ciudad Municipal en Cerro Colorado hasta Characato, y desde Congata en Uchumayo hasta las faldas del Misti. Ya que no  se cubrirán todos los nodos presentes en este grafo sino sólo los que cubran las rutas principales. Estas rutas se determinan dede las coordenadas del centro del grafo, las cuales se obtienen con los bordes del objeto de OSMNX:</p>
+        <div class='code'>
+            import math<br/>
+            nodes = ox.graph_to_gdfs(Gg, edges=False)<br/>
+            limites = nodes['geometry'].total_bounds<br/>
+            centerx = (limites[0]+limites[2])/2<br/>
+            centery = (limites[1]+limites[3])/2<br/>
+            print( str(centerx) + "," + str(centery) )
+        </div>
+        <div class='console'>
+            -71.53694395,-16.39886515
+        </div>
+        <p>Se decidió generar 50 rutas con 3 radios concéntricos determinados también desde los límites del grafo. Por cada radio se generan 50 paraes de nodos extremos determinados por un aumento de ángulo constante de 3.6 grados. Para evitar que los nodos se superpongan entre zonas concéntricas, para cada radio se genera un descentramiento de +1.5 grados con respecto al círculo más externo. Con estos datos se generan nuevas coordenadas que son enviadas al grafo  para obtener los nodos más cercanos a cada coordenada ya dada. Se obtiene una lista de 50 pares nodos extremos que producirán las rutas dentro de la ciudad. El codigo de la parte inferior muestra la configuración para el círculo más interno</p>
+        <div class='code'>
+            radiox = abs(limites[0]-limites[2])/2<br/>
+            radioy = abs(limites[1]-limites[3])/2<br/>
+            radio = max(radiox,radioy)-0.04<br/>
+            <br/>
+            x = []<br/>
+            y = []<br/>
+            for i in range(100):<br/>
+            &nbsp;&nbsp;dxx = math.cos(i*3.6*math.pi/180+3*math.pi/180)*radio<br/>
+            &nbsp;&nbsp;dyy = math.sin(i*3.6*math.pi/180+3*math.pi/180)*radio<br/>
+            &nbsp;&nbsp;x.append(centerx+dxx)<br/>
+            &nbsp;&nbsp;y.append(centery+dyy)<br/>
+            id = ox.distance.nearest_nodes(Gg,x,y)
+        </div>
+    </div>
 </body>
 </html>
