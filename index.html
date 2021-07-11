@@ -274,8 +274,24 @@
                "subdomains": "abc",
                "tms": false
           }).addTo(mymap);
-          var geojsonLayer = new L.GeoJSON.AJAX("arequipa_distrital_ciudad.geojson");       
+       
+          var geojsonLayer = new L.GeoJSON.AJAX(
+            "arequipa_distrital_ciudad.geojson",
+            {
+               argsGeoJSON: {
+                type_polygon: 1
+                },
+                bbox: true,
+                onEachFeature: function (feature, layer) {
+                    layer.bindPopup('<p>'+feature.properties.NOMBDIST+'</p>',{closeButton: false, offset: L.point(0, -20)});
+                    //layer.on('mouseover', function() { layer.openPopup(); });
+                    //layer.on('mouseout', function() { layer.closePopup(); });
+                }
+            }
+        );
           geojsonLayer.addTo(mymap);
+
+                /*var aqpMap = dc_leaflet.chotoplethChart('#mapid');*/
 
                var chart = dc.barChart('#bar');
                d3.csv("traffic50_completo.csv", function(errors, ruta) {
@@ -334,11 +350,6 @@
                     .on('renderlet',function (chart) {
                        chart.selectAll('g.x text').attr('transform', 'translate(-10,10) rotate(315)');
                     });
-                    /*.on('renderlet', function(chart) {
-                         chart.selectAll('rect').on('click', function(d) {
-                              console.log('click!', d);
-                         });
-                    });*/
                     chart.render();
                });
                
