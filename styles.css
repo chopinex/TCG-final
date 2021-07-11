@@ -109,3 +109,24 @@ td{
     margin-right: auto;
     width: 80%;
 }
+footer{
+    margin:  0 auto;
+    padding: 30px 150px;
+    color: #333;
+    text-align: center;
+    background-color: #9cc;
+    font-family: 'Kanit', sans-serif;
+    font-size: 10pt;
+}
+
+footer a{
+    text-decoration: none;
+    color: #066;
+    font-weight: bolder;
+}
+
+footer a:hover{
+    text-decoration: underline;
+    color: #666;
+    font-weight: bolder;
+}
