@@ -35,7 +35,7 @@
             Gg = ox.utils_graph.get_largest_component(G, strongly =True) <br/>
             ox.plot_graph(Gg)
         </div>
-        <p>Donde definimos el grafo desde la ubicación del centro de Arequipa, con una red de tráfico vehicular (network_type ='drive'), con conexiones simplificadas y 7 kilómetros a la redonda. El grafo generado es conexo ()get_largest_component) y se visualiza de la siguiente forma:</p>
+        <p>Donde definimos el grafo desde la ubicación del centro de Arequipa, con una red de tráfico vehicular (network_type ='drive'), con conexiones simplificadas y 7 kilómetros a la redonda. El grafo generado es conexo (get_largest_component) y se visualiza de la siguiente forma:</p>
         <img src ="grafo.png" alt ="Grafo Arequipa" />
         <p>Este grafo cubre prácticamente toda la ciudad desde Ciudad Municipal en Cerro Colorado hasta Characato, y desde Congata en Uchumayo hasta las faldas del Misti. No  se utilizarán todos los nodos presentes en este grafo sino sólo los que cubran las rutas principales. Estas rutas se determinan desde las coordenadas del centro del grafo, las cuales se obtienen con los bordes del objeto de OSMNX:</p>
         <div class ='code'>
@@ -64,7 +64,7 @@
             &nbsp;&nbsp;y.append(centery+dyy)<br/>
             id  = ox.distance.nearest_nodes(Gg,x,y)
         </div>
-        <p>Una vez conseguidos los extremos de cada camino, generamos las rutas con la función shortest_path de OSMNX, que nos da la ruta topológicamente más corta entre esos extremos. El hecho de que asiempre se obtenga la ruta más corta produce solaàmiento entre los caminos, pero a su vez aseguraque se escojan los caminos más recorridos dentro del mapa. A continuación mostramos el código y el grafo resultante para el círculo más interno:</p>
+        <p>Una vez conseguidos los extremos de cada camino, generamos las rutas con la función shortest_path de OSMNX, que nos da la ruta topológicamente más corta entre esos extremos. El hecho de que asiempre se obtenga la ruta más corta produce solapamiento entre los caminos, pero a su vez asegura que se escojan los caminos más recorridos dentro del mapa. A continuación mostramos el código y el grafo resultante para el círculo más interno:</p>
         <div class ='code'>
             total_nodes = []<br/>
             total_colores = []<br/>
