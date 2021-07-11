@@ -253,10 +253,11 @@
         <img src="folium.png" alt="Mapa de distritos y tráfico" />
         <h2>Visualización</h2>
         <p>La parte final es lograr una vista interactiva que permita obtener insights de la data recolectada. Para tal propósito recurrimos a las librerías d3 y dc de javascript que permiten enlazar la información de un mapa con gráficas interactivas. El resultado es el siguiente:</p>
-
-        <div id="mapid" style="height:460px;width: 700px;" class="visual"></div>
-         
-         <div id = "bar" class="visual"></div>
+        <div class="visual">
+            <div id="mapid" style="height:460px;width: 700px;"></div>
+             
+             <div id = "bar"></div>
+        </div>
          <script src="js/crossfilter.js"></script>
          <script src="https://d3js.org/d3.v3.min.js"></script>
          <script src="js/dc.js"></script>
