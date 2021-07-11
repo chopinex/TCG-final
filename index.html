@@ -5,7 +5,7 @@
     <link rel ="preconnect" href ="https://fonts.gstatic.com" crossorigin>
 <link href ="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,700;1,400&family=Montserrat:ital,wght@0,300;0,500;1,400&family=Source+Code+Pro:wght@200&display=swap" rel ="stylesheet">  
     <link rel ="stylesheet" href ="styles.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    <!--<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"-->
    integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
    crossorigin=""/>
           <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
@@ -252,52 +252,41 @@
         </div>
         <img src="folium.png" alt="Mapa de distritos y tráfico" />
         <h2>Visualización</h2>
+        <p>Para poder realizar el filtrado geográfico desde la data de tráfico, agregamos una áultima columna al archvi csv, para que contenga el nombre del distrito del punto de origen de cada tramo. Se escoge el origen sólo por simplicidad. Del archivo con la información de todos los distritos del Perú lo editamos manualmente para que sólo contenga los distrtios de la provincia de Arequipa, guardando el archivo resultante como arequipa_distrital_ciudad.geojson. Con este archivo realizamos el proceso de ubicación de las coordenadas dentro de las geometrías distritales:</p>
+        <div class="code">
+            pdtMerge[['distrito']] = ""<br/>
+            from shapely.geometry import shape, Point<br/>
+            with open('arequipa_distrital_ciudad.geojson') as f:<br/>
+            &nbsp;&nbsp;js = json.load(f)           <br/>
+            <br/>
+            for ind in pdtMerge.index:<br/>
+            &nbsp;&nbsp;point = Point(pdtMerge['longitud_origen'][ind], pdtMerge['latitud_origen'][ind])<br/>
+            &nbsp;&nbsp;for feature in js['features']:<br/>
+            &nbsp;&nbsp;polygon = shape(feature['geometry'])<br/>
+            &nbsp;&nbsp;if polygon.contains(point):<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;pdtMerge['distrito'][ind] = feature['properties']['NOMBDIST']
+        </div>
+        <p>El dataset resultante es el definitivo</p>
         <p>La parte final es lograr una vista interactiva que permita obtener insights de la data recolectada. Para tal propósito recurrimos a las librerías d3 y dc de javascript que permiten enlazar la información de un mapa con gráficas interactivas. El resultado es el siguiente:</p>
         <div class="visual">
-            <div id="mapid" style="height:460px;width: 700px;"></div>
-             
+            <h5>Provincia de Arequipa</h5>
+            <div id="mapid"></div>
+             <h5>Promedio de tiempo en tráfico por día y hora</h5>
              <div id = "bar"></div>
         </div>
          <script src="js/crossfilter.js"></script>
          <script src="https://d3js.org/d3.v3.min.js"></script>
          <script src="js/dc.js"></script>
+
          <script type="text/javascript">
-            var mymap = L.map('mapid').setView([-16.39886515,-71.53694395], 12);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-               "attribution": null,
-               "detectRetina": false,
-               "maxNativeZoom": 18,
-               "maxZoom": 14,
-               "minZoom": 6,
-               "noWrap": false,
-               "opacity": 1,
-               "subdomains": "abc",
-               "tms": false
-          }).addTo(mymap);
-       
-          var geojsonLayer = new L.GeoJSON.AJAX(
-            "arequipa_distrital_ciudad.geojson",
-            {
-               argsGeoJSON: {
-                type_polygon: 1
-                },
-                bbox: true,
-                onEachFeature: function (feature, layer) {
-                    layer.bindPopup('<p>'+feature.properties.NOMBDIST+'</p>',{closeButton: false, offset: L.point(0, -20)});
-                    //layer.on('mouseover', function() { layer.openPopup(); });
-                    //layer.on('mouseout', function() { layer.closePopup(); });
-                }
-            }
-        );
-          geojsonLayer.addTo(mymap);
-
-                /*var aqpMap = dc_leaflet.chotoplethChart('#mapid');*/
-
-               var chart = dc.barChart('#bar');
-               d3.csv("traffic50_completo.csv", function(errors, ruta) {
+               d3.csv("traffic50_final.csv", function(errors, ruta) {
+                d3.json("arequipa_distrital_ciudad.geojson",function(jsonData){
                     if (errors) throw errors;
-                    
-                    var parseDate = d3.time.format("%d/%m/%Y %H:%M").parse;
+
+                    var aqpMap = dc.geoChoroplethChart('#mapid');
+
+                    var chart = dc.barChart('#bar');
+                    var parseDate = d3.time.format("%Y-%m-%d %H:%M:%S").parse;
 
                     ruta.forEach(function(d){
                          d.marca_tiempo =parseDate(d.marca_tiempo);
@@ -309,8 +298,14 @@
                     var dia_hora = mycrossfilter.dimension(function(data){
                          return (data.marca_tiempo);
                     });
+
+                    var distrito = mycrossfilter.dimension(function(data){
+                        return (data.distrito);
+                    });
                     //var diferencia_tiempo = dia_hora.group().reduceSum(function(data){return data.tiempo_trafico-data.tiempo_base;});
                     var promedio_tiempo =dia_hora.group().reduce(reduceAdd, reduceRemove, reduceInitial);
+
+                    var on_mapa = distrito.group();
 
                     function reduceAdd(p, v) {
                       ++p.count;
@@ -328,20 +323,33 @@
                       return {count: 0, total: 0};
                     }
 
+                    //var centre = d3.geo.centroid(jsonData);
+                    //centre=[-71.3947653229461,-16.418480532245503]
+                    var projection = d3.geo.conicEqualArea().rotate([71.251,0]).center([0,-16.418]).scale(35000).parallels([-14,-18]);
+
+                    aqpMap
+                    .width(600)
+                    .height(400)
+                    .dimension(distrito)
+                    .projection(projection)
+                    .group(on_mapa)
+                    .overlayGeoJson(jsonData.features, "distrito", function (d) { return d.properties.NOMBDIST; })
+
+
                     var dias=["Dom 7","Dom 13","Dom 19","Lun 7","Lun 13","Lun 19","Mar 7","Mar 13","Mar 19",
                     "Mie 7","Mie 13","Mie 19","Jue 7","Jue 13", "Jue 19","Vie 7","Vie 13","Vie 19",
                     "Sab 7","Sab 13","Sab 19"];
 
                     chart
-                    .width(750)
-                    .height(280)
+                    .width(600)
+                    .height(250)
                     /*.x(d3.time.scale().domain(d3.extent(ruta, d => d.marca_tiempo))
                          .nice(d3.time.day)
                          .range([0, 800]))*/
                     .x(d3.scale.ordinal().domain(dias))
                     .xUnits(dc.units.ordinal)
                     .elasticY(true)
-                    .brushOn(true)
+                    .brushOn(false)
                     .yAxisLabel("Segundos")
                     .xAxisLabel("Día")
                     .dimension(dia_hora)
@@ -350,11 +358,13 @@
                     .on('renderlet',function (chart) {
                        chart.selectAll('g.x text').attr('transform', 'translate(-10,10) rotate(315)');
                     });
-                    chart.render();
+                    dc.renderAll();
+                });
                });
                
          </script>
-
+         <h2>Insights</h2>
+         <p>Tres distritos céntricos: Arequipa, Yanahuara y osé Luis Bustamante y Rivero presentan patrones de tráfico similares al general de la ciudad con mayores cargas en días de semana por las tardes. Los distritos periféricos presentan tráfico más ligero que lo común todos los días salvo tres notables excepciones: Cerro Colorado, que presenta mayor carga de tráfico los martes y viernes por la tarde; Sachaca que tiene cargas superiores al promedio todos los días por las tardes y las noches, salvo domingos, y Sabandía  que tiene cargas mayores en cualquier día y hora; destacando los domingos por la tarde con un tráfico muy superior al usual.</p>
     </div>
 </body>
 </html>
