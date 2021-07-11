@@ -252,7 +252,7 @@
             m
         </div>
         <img src="folium.png" alt="Mapa de distritos y tráfico" />
-        <h2>Visualización</h2>
+        <h2><a id="visualization">Visualización</a></h2>
         <p>Para poder realizar el filtrado geográfico desde la data de tráfico, agregamos una áultima columna al archvi csv, para que contenga el nombre del distrito del punto de origen de cada tramo. Se escoge el origen sólo por simplicidad. Del archivo con la información de todos los distritos del Perú lo editamos manualmente para que sólo contenga los distrtios de la provincia de Arequipa, guardando el archivo resultante como arequipa_distrital_ciudad.geojson. Con este archivo realizamos el proceso de ubicación de las coordenadas dentro de las geometrías distritales:</p>
         <div class="code">
             pdtMerge[['distrito']] = ""<br/>
