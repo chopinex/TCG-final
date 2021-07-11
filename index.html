@@ -1,46 +1,55 @@
 <html>
 <head>
-    <meta charset="utf-8">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,700;1,400&family=Montserrat:ital,wght@0,300;0,500;1,400&family=Source+Code+Pro:wght@200&display=swap" rel="stylesheet">  
-    <link rel="stylesheet" href="styles.css">
+    <meta charset ="utf-8">
+    <link rel ="preconnect" href ="https://fonts.googleapis.com">
+    <link rel ="preconnect" href ="https://fonts.gstatic.com" crossorigin>
+<link href ="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,700;1,400&family=Montserrat:ital,wght@0,300;0,500;1,400&family=Source+Code+Pro:wght@200&display=swap" rel ="stylesheet">  
+    <link rel ="stylesheet" href ="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+   crossorigin=""/>
+          <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+   crossorigin=""></script>
+          <script type="text/javascript" src="js/leaflet.ajax.min.js"></script>
+          <!--<link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css">-->
+          <link rel="stylesheet" type="text/css" href="https://dc-js.github.io/dc.js/css/dc.css"/>
 </head>
 <body>
     <header>
         <h1>Visualización de información de tráfico en la ciudad de Arequipa</h1>
         <h3>Tópicos de Computación Gráfica - Introducción a la Ciencia de Datos</h3>
     </header>
-    <div class='content'>
+    <div class ='content'>
         <h4>En el presente artículo presentamos la información recopilada, metodología de procesamiento y resultados finales del proyecto de Visualización de la data de tráfico presentada en Arequipa, con información extraída desde la API Distance Matrix de Google</h4>
-        <div class='name'>Arturo Doménico Navarro Riveros - Universidad Católica San Pablo</div>
-        <div class='contact'>arturo.navarro@ucsp.edu.pe<br />
+        <div class ='name'>Arturo Doménico Navarro Riveros - Universidad Católica San Pablo</div>
+        <div class ='contact'>arturo.navarro@ucsp.edu.pe<br />
         12 de Julio de 2021</div>
         <h2>Recolección de datos</h2>
-        <p>En un notebook en Google Colab utilizamos la librería <a href="https://github.com/gboeing/osmnx" target="blank">OSMNX</a> para generar los puntos que formarán parte del grafo de estudio dentro de la ciudad de Arequipa</p>
-        <div class='code'>!pip install osmnx<br/>
+        <p>En un notebook en Google Colab utilizamos la librería <a href ="https://github.com/gboeing/osmnx" target ="blank">OSMNX</a> para generar los puntos que formarán parte del grafo de estudio dentro de la ciudad de Arequipa</p>
+        <div class ='code'>!pip install osmnx<br/>
             import osmnx as ox<br/>
             %matplotlib inline<br/>
-            G = ox.graph_from_address('Arequipa', network_type='drive', simplify=True,dist=7000)<br/>
-            Gg = ox.utils_graph.get_largest_component(G, strongly=True) <br/>
+            G = ox.graph_from_address('Arequipa', network_type ='drive', simplify =True,dist =7000)<br/>
+            Gg = ox.utils_graph.get_largest_component(G, strongly =True) <br/>
             ox.plot_graph(Gg)
         </div>
-        <p>Donde definimos el grafo desde la ubicación del centro de Arequipa, con una red de tráfico vehicular (network_type='drive'), con conexiones simplificadas y 7 kilómetros a la redonda. El grafo generado se visualiza de la siguiente forma:</p>
-        <img src="grafo.png" alt="Grafo Arequipa" />
+        <p>Donde definimos el grafo desde la ubicación del centro de Arequipa, con una red de tráfico vehicular (network_type ='drive'), con conexiones simplificadas y 7 kilómetros a la redonda. El grafo generado se visualiza de la siguiente forma:</p>
+        <img src ="grafo.png" alt ="Grafo Arequipa" />
         <p>Este grafo cubre prácticamente toda la ciudad desde Ciudad Municipal en Cerro Colorado hasta Characato, y desde Congata en Uchumayo hasta las faldas del Misti. No  se utilizarán todos los nodos presentes en este grafo sino sólo los que cubran las rutas principales. Estas rutas se determinan desde las coordenadas del centro del grafo, las cuales se obtienen con los bordes del objeto de OSMNX:</p>
-        <div class='code'>
+        <div class ='code'>
             import math<br/>
-            nodes = ox.graph_to_gdfs(Gg, edges=False)<br/>
+            nodes = ox.graph_to_gdfs(Gg, edges =False)<br/>
             limites = nodes['geometry'].total_bounds<br/>
             centerx = (limites[0]+limites[2])/2<br/>
             centery = (limites[1]+limites[3])/2<br/>
             print( str(centerx) + "," + str(centery) )
         </div>
-        <div class='console'>
+        <div class ='console'>
             -71.53694395,-16.39886515
         </div>
         <p>Se decidió generar 50 rutas con 3 radios concéntricos determinados también desde los límites del grafo. Por cada radio se generan 50 pares de nodos extremos determinados por un aumento de ángulo constante de 3.6 grados. Para evitar que los nodos se superpongan entre zonas concéntricas, para cada radio se genera un descentramiento de +1.5 grados con respecto al círculo más externo. Con estos datos se generan nuevas coordenadas que son enviadas al grafo  para obtener los nodos más cercanos a cada coordenada ya dada. Se obtiene una lista de 50 pares nodos extremos que producirán las rutas dentro de la ciudad. El codigo de la parte inferior muestra la configuración para el círculo más interno:</p>
-        <div class='code'>
+        <div class ='code'>
             radiox = abs(limites[0]-limites[2])/2<br/>
             radioy = abs(limites[1]-limites[3])/2<br/>
             radio = max(radiox,radioy)-0.04<br/>
@@ -52,41 +61,41 @@
             &nbsp;&nbsp;dyy = math.sin(i*3.6*math.pi/180+3*math.pi/180)*radio<br/>
             &nbsp;&nbsp;x.append(centerx+dxx)<br/>
             &nbsp;&nbsp;y.append(centery+dyy)<br/>
-            id = ox.distance.nearest_nodes(Gg,x,y)
+            id  = ox.distance.nearest_nodes(Gg,x,y)
         </div>
         <p>Una vez conseguidos los extremos de cada camino, generamos las rutas con la función shortest_path de OSMNX, que nos da la ruta topológicamente más corta entre esos extremos. El hecho de que asiempre se obtenga la ruta más corta produce solaàmiento entre los caminos, pero a su vez aseguraque se escojan los caminos más recorridos dentro del mapa. A continuación mostramos el código y el grafo resultante para el círculo más interno:</p>
-        <div class='code'>
-            total_nodes=[]<br/>
-            total_colores=[]<br/>
+        <div class ='code'>
+            total_nodes = []<br/>
+            total_colores = []<br/>
             for i in range(50):<br/>
-            &nbsp;&nbsp;path=ox.distance.shortest_path(Gg,id[i],id[i+50])<br/>
+            &nbsp;&nbsp;path = ox.distance.shortest_path(Gg,id[i],id[i+50])<br/>
             &nbsp;&nbsp;total_nodes.append(path)<br/>
             &nbsp;&nbsp;total_colores.append('r')<br/>
-            fig, ax = ox.plot_graph_routes(Gg, total_nodes, route_colors=total_colores, route_linewidth=6, node_size=0, bgcolor='k')
+            fig, ax  = ox.plot_graph_routes(Gg, total_nodes, route_colors =total_colores, route_linewidth =6, node_size =0, bgcolor ='k')
         </div>
-        <img src="radio3.png" alt="circulo interno de caminos"/>
+        <img src ="radio3.png" alt ="circulo interno de caminos"/>
         <p>Combinando los tres círculos, el total de rutas queda así:</p>
-        <img src="radios.png" alt="combinacion de circulos de rutas"/>
+        <img src ="radios.png" alt ="combinacion de circulos de rutas"/>
         <p>Que, aproximadamente, cubre el 50% del grafo total.</p>
         <p>Antes de proceder con la API de tráfico, convertimos cada lista de rutas en un conjunto de tuplas, para de ese modo evitar un exceso de duplicidad en los caminos y aligerar la carga de consultas en la API. Para el círculo más interno se producen 1040 tuplas entre todas las rutas.</p>
-        <div class='code'>
-            pares=set()<br/>
+        <div class ='code'>
+            pares = set()<br/>
             for ruta in total_nodes:<br/>
             &nbsp;&nbsp;for i in range(len(ruta)-1):<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;par=(ruta[i],ruta[i+1])<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;par = (ruta[i],ruta[i+1])<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;pares.add(par)<br/>
-            pareslist=list(pares)<br/>
+            pareslist = list(pares)<br/>
             print(pareslist)<br/>
             print(len(pareslist))
         </div>
-        <div class='console'>
+        <div class ='console'>
             [(1264319433, 2085316205), (5393420597, 5393097172), (5693791863, 4557446469), (5394402902, 5394402903),...<br/>
             1040
         </div>
         <h2>Extracción de información de tráfico y construcción del dataset definitivo</h2>
-        <p>La API <a href="https://developers.google.com/maps/documentation/distance-matrix/overview" target="blank">DistanceMatrix</a>, parte de los servicios web de Google Maps, es un servicio RESTful que  permite obtener información de distancias y tiempos entre un grupo de coordenadas de origen y otro de coordenadas de destino. Las configuraciones disponibles para obtener la información incluyen tiempo sin y con tráfico, tipo de viaje (auto, metro, a pie), tipo de cálculo de tráfico (optimista, normal o pesimista) entre otras. En su versión gratuita permite 100 resultados  (producto cartesiano origenes x destinos) por petición y 100 peticiones por segundo. Además otorga un crédito inicial de $300 más $200 mensuales para su uso. El proyecto y sus resultados fueron diseñados tomando en cuenta estas limitaciones.</p>
+        <p>La API <a href ="https://developers.google.com/maps/documentation/distance-matrix/overview" target ="blank">DistanceMatrix</a>, parte de los servicios web de Google Maps, es un servicio RESTful que  permite obtener información de distancias y tiempos entre un grupo de coordenadas de origen y otro de coordenadas de destino. Las configuraciones disponibles para obtener la información incluyen tiempo sin y con tráfico, tipo de viaje (auto, metro, a pie), tipo de cálculo de tráfico (optimista, normal o pesimista) entre otras. En su versión gratuita permite 100 resultados  (producto cartesiano origenes x destinos) por petición y 100 peticiones por segundo. Además otorga un crédito inicial de $300 más $200 mensuales para su uso. El proyecto y sus resultados fueron diseñados tomando en cuenta estas limitaciones.</p>
         <p>Las librerías requeridas para hacer las consultas y procesar sus resultados son requests, json, pandas para el dataframe de salida, datetime para el procesamiento de fechas y threading y queue para el trabajo en paralelo:</p>
-        <div class="code">
+        <div class ="code">
             import requests<br/>
             import json<br/>
             import pandas as pd<br/>
@@ -95,21 +104,21 @@
             import queue
         </div>
         <p>La función para acceder a la API recibe el par de nodos de origen y destino, la lista donde se insertan los resultados, el día y hora (como marca de tiempo) en la cual se consultará el tráfico y la cola de procesamiento paralela. Ya que no todos los nodos de Arequipa generan información de tráfico o registran variaciones dependiendo del momento, por lo que dependiendo de la respuesta, se procesa la salida. Aquí duración es el tiempo de rocorrido sin tráfico, y duracion_in_traffic considerando la predicción de tráfico.</p>
-        <div class='code'>
+        <div class ='code'>
             def consultaMatriz(origins,destinations,row,tiempo,que):<br/>
-            &nbsp;&nbsp;apikey="************************"<br/>
-            &nbsp;&nbsp;units="metric"<br/>
-            &nbsp;&nbsp;url1="https://maps.googleapis.com/maps/api/distancematrix/json?units="<br/>
-            &nbsp;&nbsp;url2="&origins="<br/>
-            &nbsp;&nbsp;url3="&destinations="<br/>
-            &nbsp;&nbsp;url4="&departure_time="<br/>
-            &nbsp;&nbsp;time=str(tiempo)<br/>
-            &nbsp;&nbsp;url5="&traffic_model="<br/>
-            &nbsp;&nbsp;mode="best_guess"<br/>
-            &nbsp;&nbsp;url6="&key="<br/>
-            &nbsp;&nbsp;url_full=url1+units+url2+origins+url3+destinations+url4+time+url5+mode+url6+apikey<br/>
-            &nbsp;&nbsp;output=requests.get(url_full).json()<br/>
-            &nbsp;&nbsp;if output['rows'] and output['rows'][0]['elements'][0]['status']=='ZERO_RESULTS':<br/>
+            &nbsp;&nbsp;apikey = "************************"<br/>
+            &nbsp;&nbsp;units = "metric"<br/>
+            &nbsp;&nbsp;url1 = "https://maps.googleapis.com/maps/api/distancematrix/json?units ="<br/>
+            &nbsp;&nbsp;url2 = "&origins ="<br/>
+            &nbsp;&nbsp;url3 = "&destinations ="<br/>
+            &nbsp;&nbsp;url4 = "&departure_time ="<br/>
+            &nbsp;&nbsp;time = str(tiempo)<br/>
+            &nbsp;&nbsp;url5 = "&traffic_model ="<br/>
+            &nbsp;&nbsp;mode = "best_guess"<br/>
+            &nbsp;&nbsp;url6 = "&key ="<br/>
+            &nbsp;&nbsp;url_full = url1+units+url2+origins+url3+destinations+url4+time+url5+mode+url6+apikey<br/>
+            &nbsp;&nbsp;output = requests.get(url_full).json()<br/>
+            &nbsp;&nbsp;if output['rows'] and output['rows'][0]['elements'][0]['status'] = ='ZERO_RESULTS':<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;row.append(0)<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;row.append(0)<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;row.append(0)<br/>
@@ -124,58 +133,216 @@
             &nbsp;&nbsp;que.put(row)
         </div>
         <p>Antes de realizar el proceso de consulta, definimos en hard code el periodo en que veremos el tráfico generado, usualmente la información que da DistanceMatrix se genera a futuro (predicción), por lo que fue necesario definir en la función previa la propiedad departure_time. Esta predicción tiene un alcance de una semana. Para el ejemplo mostrado, pedimos generar la data para el periodo del 21 al 27 de junio de 2021, en tres horas definidas: 7 de la mañana, 1 de la tarde y 7 de la noche.<p>
-        <div class='code'>
-            inicio=dt.datetime(1970,1,1,0,0,0)<br/>
-            fechas=[]<br/>
-            marcas=[]<br/>
+        <div class ='code'>
+            inicio = dt.datetime(1970,1,1,0,0,0)<br/>
+            fechas = []<br/>
+            marcas = []<br/>
             for dia in range(21,28):<br/>
             &nbsp;&nbsp;for hora in [7,13,19]:<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;fechas.append(dt.datetime(2021,6,dia,hora,0,0))<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;marcas.append("202106"+("0" if dia < 10 else "")+str(dia)+str(hora)+"0000")<br/>
-            tiempos=[]<br/>
+            tiempos = []<br/>
             for fin in fechas:<br/>
             &nbsp;&nbsp;tiempos.append(int((fin-inicio).total_seconds()))
         </div>
         <p> Con las marcas de tiempo en la lista tiempos ya podemos iniciar la extracción de datos.</p>
         <p>Para las peticiones a la API decidimos trabajar con un batch de 50, para no sobrepasar los límites de ésta. De la lista de pares entonces se envían un número dado de battches por día y hora; siendo en este caso 21 envíos (7 días por 3 horas) por lista de pares:</p>
-        <div class='code'>
-            df=pd.DataFrame(columns=['marca_tiempo','latitud_origen','longitud_origen','latitud_destino','longitud_destino',"distancia","tiempo_trafico","tiempo_base"])<br/>
-            tam=len(pareslist)<br/>
-            batch=round(tam/50)<br/>
+        <div class ='code'>
+            df = pd.DataFrame(columns =['marca_tiempo','latitud_origen','longitud_origen','latitud_destino','longitud_destino',"distancia","tiempo_trafico","tiempo_base"])<br/>
+            tam = len(pareslist)<br/>
+            batch = round(tam/50)<br/>
             for k in range(len(tiempos)):<br/>
-            &nbsp;&nbsp;print(str(k)+":",end=" ")<br/>
+            &nbsp;&nbsp;print(str(k)+":",end =" ")<br/>
             &nbsp;&nbsp;for j in range(batch):<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;ltn= 50 if (j+1) * 50 < tam else tam-j*50<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;qu=queue.Queue()<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;print(j,end=", ")<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;thread_list=[]<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;ltn = 50 if (j+1) * 50 < tam else tam-j*50<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;qu = queue.Queue()<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;print(j,end = ", ")<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;thread_list = []<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;for i in range(ltn):<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fila=[]<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oo=Gg.nodes[pareslist[j*50+i][0]]<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dd=Gg.nodes[pareslist[j*50+i][1]]<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fila = []<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oo = Gg.nodes[pareslist[j*50+i][0]]<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dd = Gg.nodes[pareslist[j*50+i][1]]<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fila.append(marcas[k])<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fila.append(oo['y'])<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fila.append(oo['x'])<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fila.append(dd['y'])<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fila.append(dd['x'])<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;orig=str(oo['y'])+","+str(oo['x'])<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dest=str(dd['y'])+","+str(dd['x'])<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;th=threading.Thread(target=consultaMatriz,args=(orig,dest,fila,tiempos[k],qu))<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;orig = str(oo['y'])+","+str(oo['x'])<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dest = str(dd['y'])+","+str(dd['x'])<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;th = threading.Thread(target = consultaMatriz,args = (orig,dest,fila,tiempos[k],qu))<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;thread_list.append(th)<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;th.start()<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;for tr in thread_list:<br/>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tr.join()<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resp=qu.get()<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;df.loc[len(df)]=resp<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resp = qu.get()<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;df.loc[len(df)] = resp<br/>
             &nbsp;&nbsp;print()
         </div>
-        <div class='console'>
+        <div class ='console'>
             0: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, <br/>
             1: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, <br/>
             2: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, <br/>
             3: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,<br/>
             ...
         </div>
+        <p> Para  exportar finalmente se realiza un porceso de conversión de las marcas de tiempo al formato fecha y hora. Luego se guarda el resultado como un archivo csv.</p>
+        <div class ='code'>
+            df['marca_tiempo']  = pd.to_datetime(df['marca_tiempo'], format ='%Y%m%d%H%M%S')
+            df.to_csv('traffic50c.csv', index =False)
+        </div>
+        <p>Debido a las limitaciones ya meniconadas este proceso no se pudo hacer en una sola sesión, fue necesario repetirlo por cada círculo y por cada semana, teniendo que finalmente reunir todos los csvs producidos en una final. Este archivo de dataset es el que finalmente se procesa para su visualización.</p>
+        <div class ="code">
+            pdtMerge = pd.read_csv("traffics50_completo.csv",parse_dates = ['marca_tiempo'],dayfirst = True)<br/>
+            pdtMerge['dia_semana']  = pdtMerge['marca_tiempo'].dt.dayofweek
+        </div>
+        <div class ="code">
+            def filtroDatos(dia,hora):<br/>
+            &nbsp;&nbsp;pdtFiltro = pdtMerge[(pdtMerge['dia_semana'] == dia) & (pd.to_datetime(pdtMerge['marca_tiempo']).dt.hour == hora)]<br/>
+            &nbsp;&nbsp;pdtResult = pdtFiltro[['latitud_origen','longitud_origen','latitud_destino','longitud_destino','distancia','tiempo_trafico','tiempo_base']]<br/>
+            &nbsp;&nbsp;pdtGroup = pdtResult.groupby(['latitud_origen','longitud_origen','latitud_destino','longitud_destino','distancia']).mean()<br/>
+            &nbsp;&nbsp;return pdtGroup
+        </div>
+        <p> A modo de prueba filtramos los resultdos para el día domingo a las 7 de la mañana:</p>
+        <div class ="code">
+            dfOut = filtroDatos(0,7)<br/>
+            dfOut.head(10)
+        </div>
+        <div class ='console'>
+            <table>
+                <tr><td> </td><td> </td><td> </td><td> </td><td> </td><td>tiempo_trafico</td><td>tiempo_base</td></tr>
+                <tr><td>latitud_origen</td><td>longitud_origen</td><td>latitud_destino</td><td>longitud_destino</td><td>distancia</td><td> </td><td> </td></tr>
+                <tr><td>-16.461755</td><td>-71.527889</td><td>-16.460903</td><td>-71.525813</td><td>256</td><td>31.0</td><td>34.0</td></tr>
+                <tr><td>-16.461577</td><td>-71.525533</td><td>-16.461353</td><td>-71.525323</td><td>33</td><td>7.0 </td><td>7.0</td></tr>
+                <tr><td>-16.461353</td><td>-71.525323</td><td>-16.461750</td><td>-71.524850</td><td>72</td><td>15.0</td><td>16.</td></tr>
+                <tr><td>-16.461333</td><td>-71.515845</td><td>-16.461442</td><td>-71.515987</td><td>19</td><td>3.0 </td><td>4.0</td></tr>
+                <tr><td>-16.461210</td><td>-71.525992</td><td>-16.461577</td><td>-71.525533</td><td>62</td><td>8.0 </td><td>9.0</td></tr>
+                <tr><td>-16.460903</td><td>-71.525813</td><td>-16.461210</td><td>-71.525992</td><td>38</td><td>6.0 </td><td>6.0</td></tr>
+                <tr><td>...</td><td> </td><td> </td><td> </td><td> </td><td> </td><td></td></tr>
+            </table>
+        </div>
+        <p>A continuación generamos colores demostrativos para cada par de puntos del dataset. Esto lo hacemos considerando una diferencia de 5 segundos menos del tiempo en tráfico con respecto al tiempo base como verde, una diferencia de 5 segundos más del tiempo en tráfico como rojo y una diferencia menor a 0.5 en cualquier sentido como amarillo. Los colores los obtenemos mediante un pequeño ciclo:</p>
+        <div class ="code">
+            colores = []<br/>
+            for ind in dfOut.index:<br/>
+            &nbsp;&nbsp;dif  = dfOut['tiempo_base'][ind] - dfOut['tiempo_trafico'][ind]<br/>
+            &nbsp;&nbsp;if dif > 0.5:<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;colores.append('green')<br/>
+            &nbsp;&nbsp;elif dif < -0.5:<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;colores.append('red')<br/>
+            &nbsp;&nbsp;else:<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;colores.append('gold')
+        </div>
+        <p> Con ayuda de <a href="https://github.com/python-visualization/folium" target="blank">Folium</a> y los datos geográficos de distritos proporcionados por <a href="https://github.com/juaneladio/peru-geojson/blob/master/peru_distrital_simple.geojson" target="blank">Juan Eladio Sánchez Rosas</a>, generamos este mapa que da una primera idea de la distribución de tráfico en la ciudad para un día y hora dados. Las áreas en azul representan los límites aproximados de los distritos de Arequipa:</p>
+        <div class ="code">
+            import folium<br/>
+
+            m  = folium.Map(location =[centery, centerx],zoom_start =12)            <br/>
+            i  = 0<br/>
+            for ind in dfOut.index:<br/>
+            &nbsp;&nbsp;loc  = [(ind[0], ind[1]),(ind[2], ind[3])]<br/>
+            &nbsp;&nbsp;folium.PolyLine(loc,<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color = colores[i],<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;weight = 5,<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;opacity = 0.8).add_to(m)<br/>
+            &nbsp;&nbsp;i+= 1<br/>
+            distritos  = f"peru_distrital_simple.geojson"<br/>
+            folium.GeoJson(distritos, name = "distritos").add_to(m)           <br/>
+            folium.LayerControl().add_to(m)<br/>
+            m
+        </div>
+        <img src="folium.png" alt="Mapa de distritos y tráfico" />
+        <h2>Visualización</h2>
+        <p>La parte final es lograr una vista interactiva que permita obtener insights de la data recolectada. Para tal propósito recurrimos a las librerías d3 y dc de javascript que permiten enlazar la información de un mapa con gráficas interactivas. El resultado es el siguiente:</p>
+
+        <div id="mapid" style="height:460px;width: 700px;" class="visual"></div>
+         
+         <div id = "bar" class="visual"></div>
+         <script src="js/crossfilter.js"></script>
+         <script src="https://d3js.org/d3.v3.min.js"></script>
+         <script src="js/dc.js"></script>
+         <script type="text/javascript">
+            var mymap = L.map('mapid').setView([-16.39886515,-71.53694395], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+               "attribution": null,
+               "detectRetina": false,
+               "maxNativeZoom": 18,
+               "maxZoom": 14,
+               "minZoom": 6,
+               "noWrap": false,
+               "opacity": 1,
+               "subdomains": "abc",
+               "tms": false
+          }).addTo(mymap);
+          var geojsonLayer = new L.GeoJSON.AJAX("arequipa_distrital_ciudad.geojson");       
+          geojsonLayer.addTo(mymap);
+
+               var chart = dc.barChart('#bar');
+               d3.csv("traffic50_completo.csv", function(errors, ruta) {
+                    if (errors) throw errors;
+                    
+                    var parseDate = d3.time.format("%d/%m/%Y %H:%M").parse;
+
+                    ruta.forEach(function(d){
+                         d.marca_tiempo =parseDate(d.marca_tiempo);
+                         dias=["Dom","Lun","Mar","Mie","Jue","Vie","Sab"];
+                         d.marca_tiempo=dias[d.marca_tiempo.getDay()]+" "+d.marca_tiempo.getHours();
+                    });
+                    
+                    var mycrossfilter = crossfilter(ruta);
+                    var dia_hora = mycrossfilter.dimension(function(data){
+                         return (data.marca_tiempo);
+                    });
+                    //var diferencia_tiempo = dia_hora.group().reduceSum(function(data){return data.tiempo_trafico-data.tiempo_base;});
+                    var promedio_tiempo =dia_hora.group().reduce(reduceAdd, reduceRemove, reduceInitial);
+
+                    function reduceAdd(p, v) {
+                      ++p.count;
+                      p.total += (v.tiempo_trafico - v.tiempo_base);
+                      return p;
+                    }                   
+
+                    function reduceRemove(p, v) {
+                      --p.count;
+                      p.total -= (v.tiempo_trafico - v.tiempo_base);
+                      return p;
+                    }                   
+
+                    function reduceInitial() {
+                      return {count: 0, total: 0};
+                    }
+
+                    var dias=["Dom 7","Dom 13","Dom 19","Lun 7","Lun 13","Lun 19","Mar 7","Mar 13","Mar 19",
+                    "Mie 7","Mie 13","Mie 19","Jue 7","Jue 13", "Jue 19","Vie 7","Vie 13","Vie 19",
+                    "Sab 7","Sab 13","Sab 19"];
+
+                    chart
+                    .width(750)
+                    .height(280)
+                    /*.x(d3.time.scale().domain(d3.extent(ruta, d => d.marca_tiempo))
+                         .nice(d3.time.day)
+                         .range([0, 800]))*/
+                    .x(d3.scale.ordinal().domain(dias))
+                    .xUnits(dc.units.ordinal)
+                    .elasticY(true)
+                    .brushOn(true)
+                    .yAxisLabel("Segundos")
+                    .xAxisLabel("Día")
+                    .dimension(dia_hora)
+                    .group(promedio_tiempo)
+                    .valueAccessor(function(p) { return p.value.count > 0 ? p.value.total / p.value.count : 0; })
+                    .on('renderlet',function (chart) {
+                       chart.selectAll('g.x text').attr('transform', 'translate(-10,10) rotate(315)');
+                    });
+                    /*.on('renderlet', function(chart) {
+                         chart.selectAll('rect').on('click', function(d) {
+                              console.log('click!', d);
+                         });
+                    });*/
+                    chart.render();
+               });
+               
+         </script>
+
     </div>
 </body>
 </html>
