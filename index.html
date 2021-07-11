@@ -94,7 +94,7 @@
             1040
         </div>
         <h2>Extracción de información de tráfico y construcción del dataset definitivo</h2>
-        <p>La API <a href ="https://developers.google.com/maps/documentation/distance-matrix/overview" target ="blank">DistanceMatrix</a>, parte de los servicios web de Google Maps, es un servicio RESTful que  permite obtener información de distancias y tiempos entre un grupo de coordenadas de origen y otro de coordenadas de destino. Las configuraciones disponibles para obtener la información incluyen tiempo sin y con tráfico, tipo de viaje (auto, metro, a pie), tipo de cálculo de tráfico (optimista, normal o pesimista) entre otras. En su versión gratuita permite 25 resultados  (producto cartesiano origenes x destinos) por petición y 100 peticiones por segundo. Además otorga un crédito inicial de $300 más $200 mensuales para su uso. El proyecto y sus resultados fueron diseñados tomando en cuenta estas limitaciones.</p>
+        <p>La API <a href ="https://developers.google.com/maps/documentation/distance-matrix/overview" target ="blank">DistanceMatrix</a>, parte de los servicios web de Google Maps, es un servicio RESTful que  permite obtener información de distancias y tiempos entre un grupo de coordenadas de origen y otro de coordenadas de destino. Las configuraciones disponibles para obtener la información incluyen tiempo de tráfico base y predicho, tipo de viaje (auto, metro, a pie), tipo de cálculo de tráfico (optimista, normal o pesimista) entre otras. En su versión gratuita permite 25 resultados  (producto cartesiano origenes x destinos) por petición y 100 peticiones por segundo. Además otorga un crédito inicial de $300 más $200 mensuales para su uso. El proyecto y sus resultados fueron diseñados tomando en cuenta estas limitaciones.</p>
         <p>Las librerías requeridas para hacer las consultas y procesar sus resultados son requests, json, pandas para el dataframe de salida, datetime para el procesamiento de fechas y threading y queue para el trabajo en paralelo:</p>
         <div class ="code">
             import requests<br/>
@@ -104,7 +104,7 @@
             import threading<br/>
             import queue
         </div>
-        <p>La función para acceder a la API recibe el par de nodos de origen y destino, la lista donde se insertan los resultados, el día y hora (como marca de tiempo) en la cual se consultará el tráfico y la cola de procesamiento paralela. Ya que no todos los nodos de Arequipa generan información de tráfico o registran variaciones dependiendo del momento, por lo que dependiendo de la respuesta, se procesa la salida. Aquí duración es el tiempo de rocorrido sin tráfico, y duracion_in_traffic considerando la predicción de tráfico.</p>
+        <p>La función para acceder a la API recibe el par de nodos de origen y destino, la lista donde se insertan los resultados, el día y hora (como marca de tiempo) en la cual se consultará el tráfico y la cola de procesamiento paralela. Ya que no todos los nodos de Arequipa generan información de tráfico o registran variaciones dependiendo del momento, por lo que dependiendo de la respuesta, se procesa la salida. Aquí duración es el tiempo de rocorrido con tráfico usual, y duracion_in_traffic considerando la predicción de tráfico a futuro.</p>
         <div class ='code'>
             def consultaMatriz(origins,destinations,row,tiempo,que):<br/>
             &nbsp;&nbsp;apikey = "************************"<br/>
