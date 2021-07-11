@@ -35,7 +35,7 @@
             Gg = ox.utils_graph.get_largest_component(G, strongly =True) <br/>
             ox.plot_graph(Gg)
         </div>
-        <p>Donde definimos el grafo desde la ubicación del centro de Arequipa, con una red de tráfico vehicular (network_type ='drive'), con conexiones simplificadas y 7 kilómetros a la redonda. El grafo generado se visualiza de la siguiente forma:</p>
+        <p>Donde definimos el grafo desde la ubicación del centro de Arequipa, con una red de tráfico vehicular (network_type ='drive'), con conexiones simplificadas y 7 kilómetros a la redonda. El grafo generado es conexo ()get_largest_component) y se visualiza de la siguiente forma:</p>
         <img src ="grafo.png" alt ="Grafo Arequipa" />
         <p>Este grafo cubre prácticamente toda la ciudad desde Ciudad Municipal en Cerro Colorado hasta Characato, y desde Congata en Uchumayo hasta las faldas del Misti. No  se utilizarán todos los nodos presentes en este grafo sino sólo los que cubran las rutas principales. Estas rutas se determinan desde las coordenadas del centro del grafo, las cuales se obtienen con los bordes del objeto de OSMNX:</p>
         <div class ='code'>
@@ -94,7 +94,7 @@
             1040
         </div>
         <h2>Extracción de información de tráfico y construcción del dataset definitivo</h2>
-        <p>La API <a href ="https://developers.google.com/maps/documentation/distance-matrix/overview" target ="blank">DistanceMatrix</a>, parte de los servicios web de Google Maps, es un servicio RESTful que  permite obtener información de distancias y tiempos entre un grupo de coordenadas de origen y otro de coordenadas de destino. Las configuraciones disponibles para obtener la información incluyen tiempo sin y con tráfico, tipo de viaje (auto, metro, a pie), tipo de cálculo de tráfico (optimista, normal o pesimista) entre otras. En su versión gratuita permite 100 resultados  (producto cartesiano origenes x destinos) por petición y 100 peticiones por segundo. Además otorga un crédito inicial de $300 más $200 mensuales para su uso. El proyecto y sus resultados fueron diseñados tomando en cuenta estas limitaciones.</p>
+        <p>La API <a href ="https://developers.google.com/maps/documentation/distance-matrix/overview" target ="blank">DistanceMatrix</a>, parte de los servicios web de Google Maps, es un servicio RESTful que  permite obtener información de distancias y tiempos entre un grupo de coordenadas de origen y otro de coordenadas de destino. Las configuraciones disponibles para obtener la información incluyen tiempo sin y con tráfico, tipo de viaje (auto, metro, a pie), tipo de cálculo de tráfico (optimista, normal o pesimista) entre otras. En su versión gratuita permite 25 resultados  (producto cartesiano origenes x destinos) por petición y 100 peticiones por segundo. Además otorga un crédito inicial de $300 más $200 mensuales para su uso. El proyecto y sus resultados fueron diseñados tomando en cuenta estas limitaciones.</p>
         <p>Las librerías requeridas para hacer las consultas y procesar sus resultados son requests, json, pandas para el dataframe de salida, datetime para el procesamiento de fechas y threading y queue para el trabajo en paralelo:</p>
         <div class ="code">
             import requests<br/>
